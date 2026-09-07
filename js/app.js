@@ -88,7 +88,8 @@ function renderAnnotations() {
     el.style.top = `${ward.y}%`;
     el.title = "Ward — duplo-clique p/ remover";
     const img = document.createElement("img");
-    img.src = WARD_SRC; img.alt = "Ward"; img.draggable = false;
+    img.decoding = "async"; img.alt = "Ward"; img.draggable = false;
+    withImgFallback(img, WARD_SRC); img.src = WARD_SRC;
     el.append(img);
     el.addEventListener("dblclick", (e) => {
       e.stopPropagation();
@@ -241,7 +242,10 @@ function renderStructs() {
     d.style.left = `${s.x}%`;
     d.style.top = `${s.y}%`;
     const img = document.createElement("img");
-    img.src = structIconFor(s); img.alt = s.label; img.draggable = false;
+    const iconSrc = structIconFor(s);
+    img.decoding = "async"; img.loading = "lazy"; img.alt = s.label; img.draggable = false;
+    if (typeof withImgFallback === "function") withImgFallback(img, iconSrc);
+    img.src = iconSrc;
     d.append(img);
     if (state.structGray[s.id]) {
       if (s.kind === "baron" || s.kind === "dragon") {
@@ -252,7 +256,9 @@ function renderStructs() {
         d.append(clock);
       } else {
         const x = document.createElement("img");
-        x.className = "x-mark"; x.src = X_MARK_SRC; x.alt = "marcada";
+        x.className = "x-mark"; x.decoding = "async"; x.alt = "marcada";
+        if (typeof withImgFallback === "function") withImgFallback(x, X_MARK_SRC);
+        x.src = X_MARK_SRC;
         x.draggable = false;
         d.append(x);
       }
@@ -279,8 +285,10 @@ function renderRoster() {
 
     const icon = document.createElement("img");
     icon.className = "roster-icon";
-    icon.src = tk.src;
+    icon.loading = "lazy"; icon.decoding = "async";
     icon.alt = tk.name;
+    if (typeof withImgFallback === "function") withImgFallback(icon, tk.src);
+    icon.src = tk.src;
     if (tk.grayscale) { icon.style.filter = "grayscale(1)"; icon.style.opacity = "0.45"; }
 
     const name = document.createElement("span");
@@ -345,11 +353,15 @@ function renderTokens() {
     d.style.top = `${tk.y}%`;
     if (state.selected && state.selected.id === tk.id) d.classList.add("selected");
     const img = document.createElement("img");
-    img.src = tk.src; img.alt = tk.name; img.draggable = false;
+    img.decoding = "async"; img.alt = tk.name; img.draggable = false;
+    if (typeof withImgFallback === "function") withImgFallback(img, tk.src);
+    img.src = tk.src;
     d.append(img);
     if (tk.grayscale) {
       const x = document.createElement("img");
-      x.className = "x-mark"; x.src = X_MARK_SRC; x.alt = "marcado";
+      x.className = "x-mark"; x.decoding = "async"; x.alt = "marcado";
+      if (typeof withImgFallback === "function") withImgFallback(x, X_MARK_SRC);
+      x.src = X_MARK_SRC;
       x.draggable = false;
       d.append(x);
     }
@@ -455,7 +467,11 @@ function renderChampGrid(filter = "") {
       const b = document.createElement("button");
       b.className = "champ-card";
       const img = document.createElement("img");
-      img.src = championSrc(slug); img.alt = slug; img.loading = "lazy";
+      const cSrc = championSrc(slug);
+      img.loading = "lazy"; img.decoding = "async"; img.alt = slug;
+      img.width = 84; img.height = 84;
+      if (typeof withImgFallback === "function") withImgFallback(img, cSrc);
+      img.src = cSrc;
       const s = document.createElement("span");
       s.textContent = slug.replace(/-/g, " ");
       b.append(img, s);
@@ -524,6 +540,7 @@ const importBoardData = (data) => {
     const y = clamp(Number(raw.y) || 50, 2, 98);
     const grayscale = !!raw.grayscale;
     let src = typeof raw.src === "string" && raw.src ? raw.src : null;
+    if (src && typeof migrateSrc === "function") src = migrateSrc(src);
     if (!src) {
       if (name === "ward") src = WARD_SRC;
       else if (CHAMPIONS.includes(name)) src = championSrc(name);

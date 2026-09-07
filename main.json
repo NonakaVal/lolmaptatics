@@ -15,7 +15,7 @@
       "x": 56.86081019706422,
       "y": 50.06190330221797,
       "grayscale": false,
-      "src": "resources/champions/ahri.png"
+      "src": "resources/champions/ahri.webp"
     },
     {
       "name": "akali",
@@ -23,7 +23,7 @@
       "x": 48.81863810650575,
       "y": 50.952458608600196,
       "grayscale": false,
-      "src": "resources/champions/akali.png"
+      "src": "resources/champions/akali.webp"
     },
     {
       "name": "nautilus",
@@ -31,7 +31,7 @@
       "x": 67.50503582911621,
       "y": 76.8770148594214,
       "grayscale": false,
-      "src": "resources/champions/nautilus.png"
+      "src": "resources/champions/nautilus.webp"
     },
     {
       "name": "jinx",
@@ -39,7 +39,7 @@
       "x": 73.33548114859289,
       "y": 85.33165009249933,
       "grayscale": false,
-      "src": "resources/champions/jinx.png"
+      "src": "resources/champions/jinx.webp"
     },
     {
       "name": "caitlyn",
@@ -47,7 +47,7 @@
       "x": 78.27383689184276,
       "y": 70.1720096902601,
       "grayscale": false,
-      "src": "resources/champions/caitlyn.png"
+      "src": "resources/champions/caitlyn.webp"
     },
     {
       "name": "seraphine",
@@ -55,7 +55,7 @@
       "x": 83.7914415342808,
       "y": 75.90126852740353,
       "grayscale": false,
-      "src": "resources/champions/seraphine.png"
+      "src": "resources/champions/seraphine.webp"
     },
     {
       "name": "fiora",
@@ -63,7 +63,7 @@
       "x": 22.992699282835808,
       "y": 22.895683889367625,
       "grayscale": false,
-      "src": "resources/champions/fiora.png"
+      "src": "resources/champions/fiora.webp"
     },
     {
       "name": "jax",
@@ -71,7 +71,7 @@
       "x": 30.594826279844668,
       "y": 19.264657292836212,
       "grayscale": false,
-      "src": "resources/champions/jax.png"
+      "src": "resources/champions/jax.webp"
     },
     {
       "name": "amumu",
@@ -79,7 +79,7 @@
       "x": 69.63391732522035,
       "y": 52.01066639233092,
       "grayscale": false,
-      "src": "resources/champions/amumu.png"
+      "src": "resources/champions/amumu.webp"
     },
     {
       "name": "warwick",
@@ -87,7 +87,7 @@
       "x": 31.09931630927607,
       "y": 50.70438558221432,
       "grayscale": false,
-      "src": "resources/champions/warwick.png"
+      "src": "resources/champions/warwick.webp"
     }
   ]
 }

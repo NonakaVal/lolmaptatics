@@ -1,5 +1,7 @@
 /* Dados estáticos — só champions (sem torres/objetivos) */
-const MAP_IMAGE = "resources/map-map-icons/mapcanvas.png";
+/* Otimizado p/ GitHub Pages: WebP primário (JPG fallback só p/ basemap) */
+const MAP_IMAGE = "resources/map-map-icons/mapcanvas.webp";
+const MAP_IMAGE_FALLBACK = "resources/map-map-icons/mapcanvas.jpg";
 
 const CHAMPIONS = [
   "aatrox","ahri","akali","akshan","alistar","ambessa","amumu","annie","ashe",
@@ -20,9 +22,35 @@ const CHAMPIONS = [
   "xayah","xin-zhao","yasuo","yone","yunara","yuumi","zed","zeri","ziggs","zilean","zoe","zyra",
 ];
 
-const championSrc = (slug) => `resources/champions/${slug}.png`;
-const WARD_SRC = "resources/champions/ward.png";
-const X_MARK_SRC = "resources/map-map-icons/x-mark.png";
+const championSrc = (slug) => `resources/champions/${slug}.webp`;
+const WARD_SRC = "resources/champions/ward.webp";
+const X_MARK_SRC = "resources/map-map-icons/x-mark.webp";
+
+/* Compat: boards antigos exportados com .png → remapeia p/ .webp */
+const migrateSrc = (src) => {
+  if (typeof src !== "string") return src;
+  return src
+    .replace(/\.png$/i, ".webp")
+    .replace("map-map-icons/mapcanvas.png", "map-map-icons/mapcanvas.webp")
+    .replace("map-map-icons/x-mark.png", "map-map-icons/x-mark.webp")
+    .replace("map-map-icons/blue-tower-icon.png", "map-map-icons/blue-tower-icon.webp")
+    .replace("map-map-icons/red-tower-icon.png", "map-map-icons/red-tower-icon.webp")
+    .replace("map-map-icons/blue-nexus-icon.png", "map-map-icons/blue-nexus-icon.webp")
+    .replace("map-map-icons/red-nexus-icon.png", "map-map-icons/red-nexus-icon.webp");
+};
+/* Fallback runtime: se .webp falhar (browser antigo), tenta o .png/.jpg legado */
+const withImgFallback = (img, webpSrc) => {
+  img.onerror = () => {
+    img.onerror = null;
+    if (webpSrc.endsWith(".webp")) {
+      const legacy = webpSrc === MAP_IMAGE
+        ? MAP_IMAGE_FALLBACK
+        : webpSrc.replace(/\.webp$/i, ".png");
+      img.src = legacy;
+    }
+  };
+  return img;
+};
 
 /* Estruturas fixas mapeadas do mapcanvas.png (template matching RGB) */
 const STRUCTURES = [
@@ -56,13 +84,13 @@ const STRUCTURES = [
 const structIconFor = (s) => {
   if (s.kind === "nexus")
     return s.team === "blue"
-      ? "resources/map-map-icons/blue-nexus-icon.png"
-      : "resources/map-map-icons/red-nexus-icon.png";
+      ? "resources/map-map-icons/blue-nexus-icon.webp"
+      : "resources/map-map-icons/red-nexus-icon.webp";
   if (s.kind === "baron") return "resources/map-map-icons/baron_icon.svg";
   if (s.kind === "dragon") return "resources/map-map-icons/dragon_icon.svg";
   return s.team === "blue"
-    ? "resources/map-map-icons/blue-tower-icon.png"
-    : "resources/map-map-icons/red-tower-icon.png";
+    ? "resources/map-map-icons/blue-tower-icon.webp"
+    : "resources/map-map-icons/red-tower-icon.webp";
 };
 
 /* Quadro inicial (espelho do main.json) — fallback quando fetch falha (ex. file://) */
@@ -72,16 +100,16 @@ const DEFAULT_BOARD = {
   cam: { x: 0, y: 0, zoom: 1 },
   structGray: [],
   tokens: [
-    { name: "ahri", team: "blue", x: 56.86081019706422, y: 50.06190330221797, grayscale: false, src: "resources/champions/ahri.png" },
-    { name: "akali", team: "blue", x: 48.81863810650575, y: 50.952458608600196, grayscale: false, src: "resources/champions/akali.png" },
-    { name: "nautilus", team: "blue", x: 67.50503582911621, y: 76.8770148594214, grayscale: false, src: "resources/champions/nautilus.png" },
-    { name: "jinx", team: "blue", x: 73.33548114859289, y: 85.33165009249933, grayscale: false, src: "resources/champions/jinx.png" },
-    { name: "caitlyn", team: "blue", x: 78.05955117755705, y: 69.97498476186863, grayscale: false, src: "resources/champions/caitlyn.png" },
-    { name: "seraphine", team: "blue", x: 83.86287010570938, y: 75.60573113481632, grayscale: false, src: "resources/champions/seraphine.png" },
-    { name: "fiora", team: "blue", x: 22.992699282835808, y: 22.895683889367625, grayscale: false, src: "resources/champions/fiora.png" },
-    { name: "jax", team: "blue", x: 30.594826279844668, y: 19.264657292836212, grayscale: false, src: "resources/champions/jax.png" },
-    { name: "amumu", team: "blue", x: 69.70534589664892, y: 52.01066639233092, grayscale: false, src: "resources/champions/amumu.png" },
-    { name: "warwick", team: "blue", x: 31.09931630927607, y: 50.70438558221432, grayscale: false, src: "resources/champions/warwick.png" },
+    { name: "ahri", team: "blue", x: 56.86081019706422, y: 50.06190330221797, grayscale: false, src: "resources/champions/ahri.webp" },
+    { name: "akali", team: "blue", x: 48.81863810650575, y: 50.952458608600196, grayscale: false, src: "resources/champions/akali.webp" },
+    { name: "nautilus", team: "blue", x: 67.50503582911621, y: 76.8770148594214, grayscale: false, src: "resources/champions/nautilus.webp" },
+    { name: "jinx", team: "blue", x: 73.33548114859289, y: 85.33165009249933, grayscale: false, src: "resources/champions/jinx.webp" },
+    { name: "caitlyn", team: "blue", x: 78.05955117755705, y: 69.97498476186863, grayscale: false, src: "resources/champions/caitlyn.webp" },
+    { name: "seraphine", team: "blue", x: 83.86287010570938, y: 75.60573113481632, grayscale: false, src: "resources/champions/seraphine.webp" },
+    { name: "fiora", team: "blue", x: 22.992699282835808, y: 22.895683889367625, grayscale: false, src: "resources/champions/fiora.webp" },
+    { name: "jax", team: "blue", x: 30.594826279844668, y: 19.264657292836212, grayscale: false, src: "resources/champions/jax.webp" },
+    { name: "amumu", team: "blue", x: 69.70534589664892, y: 52.01066639233092, grayscale: false, src: "resources/champions/amumu.webp" },
+    { name: "warwick", team: "blue", x: 31.09931630927607, y: 50.70438558221432, grayscale: false, src: "resources/champions/warwick.webp" },
   ],
 };
 

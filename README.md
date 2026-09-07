@@ -50,21 +50,35 @@ js/app.js       # render, drag, zoom, setas, wards, import/export
 main.json       # quadro inicial
 mapcanvas.canvas
 resources/
-  champions/        # ~150 ícones + ward.png
-  map-map-icons/    # mapcanvas.png (mapa base) + ícones de torre/nexus
-  neutral-monsters/ # baron, arauto, dragões
+  champions/        # 142 ícones em WebP (+ PNG legado p/ fallback) + ward
+  map-map-icons/    # mapcanvas.webp (183KB) + mapcanvas.jpg (fallback) + ícones
 ```
 
-## Arquivos grandes (Git LFS)
+## Imagens (otimizado p/ GitHub Pages)
 
-O mapa base `resources/map-map-icons/mapcanvas.png` (~217MB) e demais imagens vão via **Git LFS** (ver `.gitattributes`). Push/fetch normais funcionam, mas o clone baixa ~600MB+:
+Tudo em **WebP** como primário, sem Git LFS (Pages não resolve LFS):
 
-```bash
-git lfs install   # uma vez por máquina
-git lfs pull      # garante os binários após clone
-```
+| Asset | Antes | Depois |
+|---|---|---|
+| `mapcanvas` base (2048px) | PNG 217MB | WebP 183KB + JPG 325KB (fallback) |
+| 143 champions + ward | PNG 5,9MB | WebP 869KB (PNG mantido p/ fallback) |
+| Ícones torre/nexus | PNG 120–165KB | WebP 13–19KB (PNG mantido p/ fallback) |
+| Baron/dragão | SVG | SVG (inalterado, já ideal) |
 
-> Para reduzir o repo no futuro: comprimir o `mapcanvas.png` (ex. `squoosh`, `tinypng` ou exportar em 2048px JPG/WebP) e remover mapas não usados (`mapcanvas.bak.png`, `Summoner-Rift-Map.png`, `wildriftmap_upscayl_4x*`). Nada foi deletado nesta preparação — só isolado via `.gitignore`/LFS.
+Removidos por não serem usados: `mapcanvas.bak.png`, `Summoner-Rift-Map.png`,
+`wildriftmap*`, `maptowersposition.png`, `lane-*`, `mid-jungle.png`,
+`wards-icon.svg`, `times_icon.svg`, `resources/neutral-monsters/`.
+
+Compat: boards exportados com `.png` antigo são remapeados p/ `.webp` no
+import (`migrateSrc` em `js/data.js`) + fallback runtime via `onerror`.
+
+## Deploy no GitHub Pages
+
+1. Push na `main`
+2. Repo → Settings → Pages → Source: `Deploy from a branch` → `main` / `/ (root)`
+3. URL: `https://<user>.github.io/<repo>/` (paths relativos, sem `<base>`)
+
+> Maior arquivo deployado: ~332KB. Nenhum LFS = imagens servidas direto.
 
 ## License
 

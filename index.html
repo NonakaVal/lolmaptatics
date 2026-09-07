@@ -3,7 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Planejador tático Wild Rift — arraste champions, marque torres, desenhe setas." />
   <title>Wild Rift Map Planner — Champions</title>
+  <link rel="preload" as="image" href="resources/map-map-icons/mapcanvas.webp" fetchpriority="high" />
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
@@ -23,7 +25,10 @@
   <main class="layout">
     <section class="viewport" id="viewport">
       <div class="world" id="world">
-        <img id="basemap" class="basemap" src="resources/map-map-icons/mapcanvas.png" alt="Mapa" draggable="false" />
+        <picture>
+          <source srcset="resources/map-map-icons/mapcanvas.webp" type="image/webp" />
+          <img id="basemap" class="basemap" src="resources/map-map-icons/mapcanvas.jpg" alt="Mapa" draggable="false" fetchpriority="high" decoding="async" width="2048" height="1485" />
+        </picture>
         <div id="layer-structs" class="layer"></div>
         <svg id="layer-arrows" class="layer" viewBox="0 0 1000 725.0755" aria-label="Setas de movimentação">
           <defs><marker id="arrow-tip" viewBox="0 0 16 14" refX="14" refY="7" markerWidth="5" markerHeight="4.375" orient="auto" overflow="visible"><path d="M 1 1 L 14 7 L 1 13 L 4 7 Z" fill="#e8cf87" stroke="#e8cf87" stroke-width="1.2" stroke-linejoin="round" /></marker><marker id="arrow-tip-blue" viewBox="0 0 16 14" refX="14" refY="7" markerWidth="5" markerHeight="4.375" orient="auto" overflow="visible"><path d="M 1 1 L 14 7 L 1 13 L 4 7 Z" fill="#2f9dff" stroke="#2f9dff" stroke-width="1.2" stroke-linejoin="round" /></marker><marker id="arrow-tip-red" viewBox="0 0 16 14" refX="14" refY="7" markerWidth="5" markerHeight="4.375" orient="auto" overflow="visible"><path d="M 1 1 L 14 7 L 1 13 L 4 7 Z" fill="#ff4d5e" stroke="#ff4d5e" stroke-width="1.2" stroke-linejoin="round" /></marker></defs>
@@ -34,7 +39,7 @@
       </div>
       <div class="map-zoom" id="map-zoom" role="group" aria-label="Ferramentas e zoom do mapa">
         <button id="tool-arrow" class="btn tool-btn" aria-pressed="false" title="Comece em um personagem ou na ponta de uma seta" aria-describedby="tool-hint"><span aria-hidden="true">↗</span><span>Seta</span></button>
-        <button id="tool-ward" class="btn tool-btn" aria-pressed="false" title="Clique no mapa para colocar uma ward" aria-describedby="tool-hint"><img src="resources/champions/ward.png" alt="" /><span>Ward</span></button>
+        <button id="tool-ward" class="btn tool-btn" aria-pressed="false" title="Clique no mapa para colocar uma ward" aria-describedby="tool-hint"><img src="resources/champions/ward.webp" alt="" loading="lazy" decoding="async" /><span>Ward</span></button>
         <span class="toolbar-divider" aria-hidden="true"></span>
         <button id="zoom-out" class="zoom-btn" title="Afastar (-)">−</button>
         <span class="zoom-label" id="zoom-label">100%</span>
