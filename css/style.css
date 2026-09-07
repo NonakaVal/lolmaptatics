@@ -92,7 +92,7 @@ body {
   position: absolute;
   left: 50%;
   top: 50%;
-  width: min(96%, 1400px);
+  width: min(91.2%, 1330px);
   aspect-ratio: 19860 / 14400;
   transform: translate(-50%, -50%) translate(0px, 0px) scale(1);
   transform-origin: center center;
@@ -354,14 +354,15 @@ body {
 #layer-labels { pointer-events: none; }
 .map-label {
   position: absolute;
-  transform: translate(-50%, -130%);
-  min-width: 60px;
-  max-width: 160px;
+  transform: translate(-50%, -25%);
+  min-width: 44px;
+  max-width: 120px;
   background: rgba(23, 28, 36, 0.95);
   border: 1px solid #2d3849;
   border-radius: 8px;
-  padding: 4px 20px 4px 8px;
+  padding: 3px 18px 3px 7px;
   font-size: 11px;
+  font-weight: 700;
   color: var(--text);
   pointer-events: auto;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
@@ -377,15 +378,15 @@ body {
 }
 .map-label .label-close {
   position: absolute;
-  top: -8px;
-  right: -8px;
-  width: 18px;
-  height: 18px;
+  top: -6px;
+  right: -6px;
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
   border: 1px solid #2d3849;
   background: #0f141c;
   color: var(--muted);
-  font-size: 11px;
+  font-size: 9px;
   line-height: 1;
   cursor: pointer;
   display: flex;

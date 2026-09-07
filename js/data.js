@@ -66,14 +66,14 @@ const STRUCTURES = [
   { id: "BBOT-T3", team: "blue", label: "T3 BLUE BOT", x: 34.72, y: 84.41, kind: "tower" },
   { id: "B-NX", team: "blue", label: "BLUE NEXUS", x: 21.10, y: 81.81, kind: "nexus" },
   // RED — base superior-direita
-  { id: "RTOP-T1", team: "red", label: "T1 RED TOP", x: 35.20, y: 14.20, kind: "tower" },
+  { id: "RTOP-T1", team: "red", label: "T1 RED TOP", x: 35.20, y: 15, kind: "tower" },
   { id: "RTOP-T2", team: "red", label: "T2 RED TOP", x: 52.11, y: 16.88, kind: "tower" },
   { id: "RTOP-T3", team: "red", label: "T3 RED TOP", x: 64.15, y: 16.88, kind: "tower" },
   { id: "RMID-T1", team: "red", label: "T1 RED MID", x: 57.75, y: 42.15, kind: "tower" },
   { id: "RMID-T2", team: "red", label: "T2 RED MID", x: 62.03, y: 33.89, kind: "tower" },
   { id: "RMID-T3", team: "red", label: "T3 RED MID", x: 70.42, y: 25.87, kind: "tower" },
-  { id: "RBOT-T1", team: "red", label: "T1 RED BOT", x: 83.13, y: 66.15, kind: "tower" },
-  { id: "RBOT-T2", team: "red", label: "T2 RED BOT", x: 78.90, y: 44.83, kind: "tower" },
+  { id: "RBOT-T1", team: "red", label: "T1 RED BOT", x: 82.57, y: 66.15, kind: "tower" },
+  { id: "RBOT-T2", team: "red", label: "T2 RED BOT", x: 79.50, y: 44.83, kind: "tower" },
   { id: "RBOT-T3", team: "red", label: "T3 RED BOT", x: 79.33, y: 33.89, kind: "tower" },
   { id: "R-NX", team: "red", label: "RED NEXUS", x: 77.22, y: 19.55, kind: "nexus" },
   // Objetivos épicos do rio
@@ -95,22 +95,23 @@ const structIconFor = (s) => {
 
 /* Quadro inicial (espelho do main.json) — fallback quando fetch falha (ex. file://) */
 const DEFAULT_BOARD = {
-  version: 1,
+  version: 2,
   app: "wild-rift-map-planner",
   cam: { x: 0, y: 0, zoom: 1 },
-  structGray: [],
+  structGray: ["BMID-T1"],
   tokens: [
-    { name: "ahri", team: "blue", x: 56.86081019706422, y: 50.06190330221797, grayscale: false, src: "resources/champions/ahri.webp" },
-    { name: "akali", team: "blue", x: 48.81863810650575, y: 50.952458608600196, grayscale: false, src: "resources/champions/akali.webp" },
-    { name: "nautilus", team: "blue", x: 67.50503582911621, y: 76.8770148594214, grayscale: false, src: "resources/champions/nautilus.webp" },
-    { name: "jinx", team: "blue", x: 73.33548114859289, y: 85.33165009249933, grayscale: false, src: "resources/champions/jinx.webp" },
-    { name: "caitlyn", team: "blue", x: 78.05955117755705, y: 69.97498476186863, grayscale: false, src: "resources/champions/caitlyn.webp" },
-    { name: "seraphine", team: "red", x: 83.86287010570938, y: 75.60573113481632, grayscale: false, src: "resources/champions/seraphine.webp" },
-    { name: "fiora", team: "red", x: 22.992699282835808, y: 22.895683889367625, grayscale: false, src: "resources/champions/fiora.webp" },
-    { name: "jax", team: "red", x: 30.594826279844668, y: 19.264657292836212, grayscale: false, src: "resources/champions/jax.webp" },
-    { name: "amumu", team: "red", x: 69.70534589664892, y: 52.01066639233092, grayscale: false, src: "resources/champions/amumu.webp" },
-    { name: "warwick", team: "red", x: 31.09931630927607, y: 50.70438558221432, grayscale: false, src: "resources/champions/warwick.webp" },
+    { name: "fiora", team: "blue", x: 23.781044121543346, y: 24.613473133366476, grayscale: false, src: "resources/champions/fiora.webp" },
+    { name: "warwick", team: "blue", x: 30.512554626108695, y: 48.25669993357688, grayscale: false, src: "resources/champions/warwick.webp" },
+    { name: "akali", team: "blue", x: 48.89939092302898, y: 49.03777246914578, grayscale: false, src: "resources/champions/akali.webp" },
+    { name: "jinx", team: "blue", x: 70.06036845576813, y: 85.32115340153572, grayscale: false, src: "resources/champions/jinx.webp" },
+    { name: "nautilus", team: "blue", x: 66.8887899934866, y: 79.532094094478, grayscale: false, src: "resources/champions/nautilus.webp" },
+    { name: "jax", team: "red", x: 29.642765084282267, y: 19.26395571897224, grayscale: false, src: "resources/champions/jax.webp" },
+    { name: "amumu", team: "red", x: 72.03323538808337, y: 54.617490708822864, grayscale: false, src: "resources/champions/amumu.webp" },
+    { name: "ahri", team: "red", x: 53.86662950420562, y: 47.073560015139854, grayscale: false, src: "resources/champions/ahri.webp" },
+    { name: "caitlyn", team: "red", x: 79.91813455052136, y: 78.68291980192646, grayscale: false, src: "resources/champions/caitlyn.webp" },
+    { name: "seraphine", team: "red", x: 77.30309025755118, y: 71.40196672252269, grayscale: false, src: "resources/champions/seraphine.webp" },
   ],
+  labels: [],
 };
 
 const cloneBoard = (b) => JSON.parse(JSON.stringify(b));

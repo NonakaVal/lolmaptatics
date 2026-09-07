@@ -119,9 +119,9 @@ function renderLabels() {
       const el = document.createElement("div");
       el.className = "map-label";
       el.dataset.id = lb.id;
-      // Empilha acima do token: cada caixa extra sobe um pouco mais
+      // Leve sobreposição na base do token
       el.style.left = `${tk.x}%`;
-      el.style.top = `${tk.y - i * 4}%`;
+      el.style.top = `${tk.y + 2.2 + i * 2.5}%`;
       const input = document.createElement("input");
       input.value = lb.text || "";
       input.placeholder = "Texto...";
@@ -173,14 +173,12 @@ world.addEventListener("click", (e) => {
     const tokenEl = e.target.closest ? e.target.closest(".token") : null;
     const token = tokenById(tokenEl?.dataset.id);
     if (!token) { selectTool(null); return; }
-    const typed = window.prompt(`Texto para ${token.name.replace(/-/g, " ")}:`, "");
-    if (typed === null) return; // cancelou
-    state.labels.push({ id: uid(), tokenId: token.id, text: (typed || "").trim() });
+    state.labels.push({ id: uid(), tokenId: token.id, text: "" });
     renderLabels();
-    // Foca o input recém-criado
+    // Foca o input recém-criado direto no canvas
     const box = $("#layer-labels");
     const last = box ? box.lastElementChild?.querySelector("input") : null;
-    if (last) last.focus();
+    if (last) { last.focus(); last.select(); }
     return;
   }
   else if (!arrowStart) {
