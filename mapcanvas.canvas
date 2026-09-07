@@ -1,0 +1,32 @@
+{
+	"nodes":[
+		{"id":"a9206b68bfd9053b","type":"file","file":"Summoner-Rift-Map.png","x":-670,"y":440,"width":2700,"height":1920},
+		{"id":"d7a35b88460292eb","type":"file","file":"X/Media/red-nexus-icon 1.png","x":1393,"y":720,"width":119,"height":110},
+		{"id":"1fbfbf9cc5b18bb7","type":"file","file":"X/Media/blue-nexus-icon 1.png","x":-200,"y":2000,"width":119,"height":110},
+		{"id":"18e8b5cfb68f9af9","type":"file","file":"X/Media/blue-tower-icon 1.png","x":320,"y":1600,"width":119,"height":110},
+		{"id":"2efd04aa8a3c8e22","type":"file","file":"X/Media/blue-tower-icon 1.png","x":440,"y":1400,"width":119,"height":110},
+		{"id":"cb5bbf7f60e997c3","type":"file","file":"X/Media/blue-tower-icon 1.png","x":1081,"y":2110,"width":119,"height":110},
+		{"id":"4579efb92fb61078","type":"file","file":"X/Media/blue-tower-icon 1.png","x":558,"y":1789,"width":119,"height":110},
+		{"id":"b372e102e6ffb7b7","type":"file","file":"X/Media/blue-tower-icon 1.png","x":-259,"y":960,"width":119,"height":110},
+		{"id":"13fe504da3e5d607","type":"file","file":"X/Media/blue-tower-icon 1.png","x":127,"y":1734,"width":119,"height":110},
+		{"id":"76c4d4a6a1f77f75","type":"file","file":"X/Media/blue-tower-icon 1.png","x":187,"y":2055,"width":119,"height":110},
+		{"id":"85e1d67cb5715013","type":"file","file":"X/Media/blue-tower-icon 1.png","x":-258,"y":1655,"width":119,"height":110},
+		{"id":"9bb6c9a240c4f9ef","type":"file","file":"X/Media/blue-tower-icon 1.png","x":-258,"y":1400,"width":119,"height":110},
+		{"id":"68b51be575cc2fe2","type":"file","file":"X/Media/red-tower-icon 3.png","x":1560,"y":1679,"width":119,"height":110},
+		{"id":"a3e70c78498508e4","type":"file","file":"X/Media/red-tower-icon 3.png","x":1441,"y":1240,"width":119,"height":110},
+		{"id":"12f4c5de1d4d0048","type":"file","file":"X/Media/red-tower-icon 3.png","x":201,"y":610,"width":119,"height":110},
+		{"id":"bd0f40c09018dcd6","type":"file","file":"X/Media/red-tower-icon 3.png","x":840,"y":1185,"width":119,"height":110},
+		{"id":"36f178e246c0ace6","type":"file","file":"X/Media/red-tower-icon 3.png","x":680,"y":665,"width":119,"height":110},
+		{"id":"eea0b45c3d3f14fa","type":"file","file":"X/Media/red-tower-icon 3.png","x":962,"y":1015,"width":119,"height":110},
+		{"id":"960aa55838a97a49","type":"file","file":"X/Media/red-tower-icon 3.png","x":1022,"y":665,"width":119,"height":110},
+		{"id":"583c97679fd4f52e","type":"file","file":"X/Media/red-tower-icon 3.png","x":1200,"y":850,"width":119,"height":110},
+		{"id":"676187dcf743372c","type":"file","file":"X/Media/red-tower-icon 3.png","x":1453,"y":1015,"width":119,"height":110},
+		{"id":"48af9e7246606c8c","type":"file","file":"X/Media/baron_icon 1.svg","x":261,"y":992,"width":156,"height":156},
+		{"id":"d3188e53ad66db3d","type":"file","file":"X/Media/dragon_icon 1.svg","x":959,"y":1638,"width":200,"height":192}
+	],
+	"edges":[],
+	"metadata":{
+		"version":"1.0-1.0",
+		"frontmatter":{}
+	}
+}

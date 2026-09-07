@@ -1,0 +1,93 @@
+{
+  "version": 1,
+  "app": "wild-rift-map-planner",
+  "savedAt": "2026-09-05T06:45:13.847Z",
+  "cam": {
+    "x": 0,
+    "y": 0,
+    "zoom": 1
+  },
+  "structGray": [],
+  "tokens": [
+    {
+      "name": "ahri",
+      "team": "red",
+      "x": 56.86081019706422,
+      "y": 50.06190330221797,
+      "grayscale": false,
+      "src": "resources/champions/ahri.png"
+    },
+    {
+      "name": "akali",
+      "team": "blue",
+      "x": 48.81863810650575,
+      "y": 50.952458608600196,
+      "grayscale": false,
+      "src": "resources/champions/akali.png"
+    },
+    {
+      "name": "nautilus",
+      "team": "blue",
+      "x": 67.50503582911621,
+      "y": 76.8770148594214,
+      "grayscale": false,
+      "src": "resources/champions/nautilus.png"
+    },
+    {
+      "name": "jinx",
+      "team": "blue",
+      "x": 73.33548114859289,
+      "y": 85.33165009249933,
+      "grayscale": false,
+      "src": "resources/champions/jinx.png"
+    },
+    {
+      "name": "caitlyn",
+      "team": "red",
+      "x": 78.27383689184276,
+      "y": 70.1720096902601,
+      "grayscale": false,
+      "src": "resources/champions/caitlyn.png"
+    },
+    {
+      "name": "seraphine",
+      "team": "red",
+      "x": 83.7914415342808,
+      "y": 75.90126852740353,
+      "grayscale": false,
+      "src": "resources/champions/seraphine.png"
+    },
+    {
+      "name": "fiora",
+      "team": "blue",
+      "x": 22.992699282835808,
+      "y": 22.895683889367625,
+      "grayscale": false,
+      "src": "resources/champions/fiora.png"
+    },
+    {
+      "name": "jax",
+      "team": "red",
+      "x": 30.594826279844668,
+      "y": 19.264657292836212,
+      "grayscale": false,
+      "src": "resources/champions/jax.png"
+    },
+    {
+      "name": "amumu",
+      "team": "red",
+      "x": 69.63391732522035,
+      "y": 52.01066639233092,
+      "grayscale": false,
+      "src": "resources/champions/amumu.png"
+    },
+    {
+      "name": "warwick",
+      "team": "blue",
+      "x": 31.09931630927607,
+      "y": 50.70438558221432,
+      "grayscale": false,
+      "src": "resources/champions/warwick.png"
+    }
+  ]
+}

@@ -1,0 +1,77 @@
+# ─── Projeto: só código-fonte sobe ─────────────────────────────
+# App estático (index.html + css/ + js/ + resources/ + main.json)
+# Tudo abaixo é sujeira local e NUNCA deve ir ao repositório.
+
+# ─── Sessões e temporários do agente / workflow ───────────────
+.tmp/
+.opencode/
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+# ─── Backups e arquivos de edição ─────────────────────────────
+*.bak
+*.bak.png
+*.orig
+*.rej
+*.old
+*.backup
+
+# ─── Sistema operacional ──────────────────────────────────────
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# ─── IDEs e editores ──────────────────────────────────────────
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.code-workspace
+*.sublime-project
+*.sublime-workspace
+*.viminfo
+.vim/
+
+# ─── Logs e debug ─────────────────────────────────────────────
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+logs/
+
+# ─── Dependências futuras (se um dia houver build) ────────────
+node_modules/
+dist/
+build/
+out/
+coverage/
+.next/
+.nuxt/
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# ─── Segredos — NUNCA commitar (security-patterns.md) ─────────
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+secrets/
+credentials.json
+serviceAccount*.json
+
+# ─── Git LFS local / OS ───────────────────────────────────────
+.git/lfs/

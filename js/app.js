@@ -1,0 +1,512 @@
+/* Wild Rift Map Planner — só champions, vanilla JS */
+const $ = (sel) => document.querySelector(sel);
+const clamp = (v, min, max) => Math.min(max, Math.max(min, v));
+const uid = () => `t${Date.now().toString(36)}${Math.floor(Math.random() * 999)}`;
+
+const state = {
+  cam: { x: 0, y: 0, zoom: 1 },
+  tokens: [], // {id, src, name, team, x, y, grayscale} — sempre 10
+  arrows: [],
+  wards: [],
+  selected: null, // {id}
+  structGray: {}, // structId -> true (P&B + X)
+};
+
+const MAX_TOKENS = 10;
+let pendingSwapId = null;
+
+const viewport = $("#viewport");
+const world = $("#world");
+const layerStructs = $("#layer-structs");
+const layerTokens = $("#layer-tokens");
+
+/* ---------- ferramentas do mapa ---------- */
+let activeTool = null;
+let arrowStart = null;
+let arrowPreview = null;
+const toolHints = {
+  arrow: "Clique em um personagem ou na ponta de uma seta. Esc para sair.",
+  ward: "Clique no mapa para colocar uma ward. Esc para sair.",
+};
+function selectTool(tool) {
+  activeTool = tool;
+  arrowStart = arrowPreview = null;
+  world.classList.toggle("tool-active", !!tool);
+  ["arrow", "ward"].forEach((name) => {
+    $(`#tool-${name}`).setAttribute("aria-pressed", String(name === tool));
+  });
+  $("#tool-hint").textContent = toolHints[tool] || "";
+  renderAnnotations();
+}
+function renderAnnotations() {
+  const group = $("#arrows");
+  group.replaceChildren();
+  const arrows = [...state.arrows];
+  if (arrowStart && arrowPreview) arrows.push({ start: arrowStart, end: arrowPreview, preview: true });
+  arrows.forEach((arrow) => {
+    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+    line.setAttribute("class", "movement-arrow" + (arrow.preview ? " preview" : ""));
+    line.setAttribute("x1", arrow.start.x * 10);
+    line.setAttribute("y1", arrow.start.y * 7.250755);
+    line.setAttribute("x2", arrow.end.x * 10);
+    line.setAttribute("y2", arrow.end.y * 7.250755);
+    group.append(line);
+    if (activeTool === "arrow" && !arrowStart && !arrow.preview) {
+      const endpoint = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      endpoint.setAttribute("class", "arrow-endpoint");
+      endpoint.setAttribute("cx", arrow.end.x * 10);
+      endpoint.setAttribute("cy", arrow.end.y * 7.250755);
+      endpoint.setAttribute("r", 8);
+      group.append(endpoint);
+    }
+  });
+  const wards = $("#layer-wards");
+  wards.replaceChildren();
+  state.wards.forEach((ward) => {
+    const el = document.createElement("div");
+    el.className = "ward";
+    el.style.left = `${ward.x}%`;
+    el.style.top = `${ward.y}%`;
+    const img = document.createElement("img");
+    img.src = WARD_SRC; img.alt = "Ward"; img.draggable = false;
+    el.append(img);
+    wards.append(el);
+  });
+}
+function mapPoint(e) {
+  const rect = world.getBoundingClientRect();
+  return { x: clamp((e.clientX - rect.left) / rect.width * 100, 0, 100),
+    y: clamp((e.clientY - rect.top) / rect.height * 100, 0, 100) };
+}
+world.addEventListener("pointerdown", (e) => {
+  if (activeTool) { e.stopPropagation(); e.preventDefault(); }
+}, true);
+world.addEventListener("dblclick", (e) => {
+  if (activeTool) { e.stopPropagation(); e.preventDefault(); }
+}, true);
+world.addEventListener("click", (e) => {
+  if (!activeTool || e.button !== 0) return;
+  e.stopPropagation();
+  const point = mapPoint(e);
+  if (activeTool === "ward") state.wards.push(point);
+  else if (!arrowStart) {
+    // A tolerância em pixels mantém a ponta fácil de selecionar em qualquer zoom.
+    const rect = world.getBoundingClientRect();
+    let nearest = null, distance = 14;
+    state.arrows.forEach((arrow) => {
+      const d = Math.hypot((point.x - arrow.end.x) * rect.width / 100,
+        (point.y - arrow.end.y) * rect.height / 100);
+      if (d <= distance) { nearest = arrow.end; distance = d; }
+    });
+    const token = tokenById(e.target.closest(".token")?.dataset.id);
+    const start = nearest || token;
+    if (!start) return;
+    arrowStart = { x: start.x, y: start.y };
+    arrowPreview = arrowStart;
+    $("#tool-hint").textContent = "Mova o mouse e clique no destino. Esc cancela.";
+  }
+  else {
+    if (Math.hypot(point.x - arrowStart.x, point.y - arrowStart.y) < 0.1) return;
+    state.arrows.push({ start: arrowStart, end: point });
+    arrowStart = arrowPreview = null;
+    $("#tool-hint").textContent = toolHints.arrow;
+  }
+  renderAnnotations();
+}, true);
+world.addEventListener("pointermove", (e) => {
+  if (!arrowStart) return;
+  arrowPreview = mapPoint(e);
+  renderAnnotations();
+});
+
+/* ---------- camera ---------- */
+const applyCam = () => {
+  const { x, y, zoom } = state.cam;
+  world.style.transform = `translate(-50%,-50%) translate(${x}px,${y}px) scale(${zoom})`;
+  $("#zoom-label").textContent = `${Math.round(zoom * 100)}%`;
+};
+
+const setZoom = (z) => {
+  state.cam.zoom = clamp(z, 0.5, 3);
+  applyCam();
+};
+
+/* ---------- seleção ---------- */
+const setSelected = (id) => {
+  state.selected = id ? { id } : null;
+  document.querySelectorAll(".token.selected")
+    .forEach((el) => el.classList.remove("selected"));
+  if (id) {
+    const el = document.querySelector(`.token[data-id="${id}"]`);
+    if (el) el.classList.add("selected");
+  }
+};
+
+const tokenById = (id) => state.tokens.find((t) => t.id === id);
+
+/* ---------- estruturas fixas (torres/nexus) ---------- */
+const toggleStruct = (id) => {
+  if (state.structGray[id]) delete state.structGray[id];
+  else state.structGray[id] = true;
+  renderStructs();
+};
+
+function renderStructs() {
+  layerStructs.innerHTML = "";
+  STRUCTURES.forEach((s) => {
+    const d = document.createElement("div");
+    d.className = "structure" + (state.structGray[s.id] ? " grayscale" : "");
+    d.dataset.id = s.id;
+    d.title = `${s.label} — duplo-clique p/ marcar`;
+    d.style.left = `${s.x}%`;
+    d.style.top = `${s.y}%`;
+    const img = document.createElement("img");
+    img.src = structIconFor(s); img.alt = s.label; img.draggable = false;
+    d.append(img);
+    if (state.structGray[s.id]) {
+      const x = document.createElement("img");
+      x.className = "x-mark"; x.src = X_MARK_SRC; x.alt = "marcada";
+      x.draggable = false;
+      d.append(x);
+    }
+    d.addEventListener("dblclick", (e) => { e.stopPropagation(); e.preventDefault(); toggleStruct(s.id); });
+    layerStructs.append(d);
+  });
+}
+
+/* ---------- roster (side bar) ---------- */
+function renderRoster() {
+  const box = $("#roster");
+  if (!state.tokens.length) {
+    box.innerHTML = `<p class="muted">Nenhum personagem adicionado.</p>`;
+    return;
+  }
+  box.innerHTML = "";
+  state.tokens.forEach((tk) => {
+    const item = document.createElement("div");
+    item.className = "roster-item";
+    item.dataset.team = tk.team;
+    if (tk.grayscale) item.classList.add("is-gray");
+    if (state.selected && state.selected.id === tk.id) item.classList.add("selected");
+
+    const icon = document.createElement("img");
+    icon.className = "roster-icon";
+    icon.src = tk.src;
+    icon.alt = tk.name;
+    if (tk.grayscale) { icon.style.filter = "grayscale(1)"; icon.style.opacity = "0.45"; }
+
+    const name = document.createElement("span");
+    name.className = "roster-name";
+    name.textContent = tk.name.replace(/-/g, " ");
+
+    const btnBw = document.createElement("button");
+    btnBw.className = "roster-bw" + (tk.grayscale ? " active" : "");
+    btnBw.title = "Preto e branco";
+    btnBw.innerHTML = "◐";
+    btnBw.onclick = (e) => { e.stopPropagation(); toggleGrayscale(tk.id); };
+
+    const btnSwap = document.createElement("button");
+    btnSwap.className = "roster-swap";
+    btnSwap.title = "Trocar personagem";
+    btnSwap.innerHTML = "⇄";
+    btnSwap.onclick = (e) => { e.stopPropagation(); openSwapPicker(tk.id); };
+
+    item.addEventListener("click", () => setSelected(tk.id));
+    item.append(icon, name, btnBw, btnSwap);
+    box.append(item);
+  });
+}
+
+/* ---------- tokens (quadro fixo de 10) ---------- */
+const addToken = ({ src, name, team = "blue", x = 50, y = 50 }) => {
+  if (state.tokens.length >= MAX_TOKENS) return null;
+  const tk = { id: uid(), src, name, team, x: clamp(x, 2, 98), y: clamp(y, 2, 98), grayscale: false };
+  state.tokens = [...state.tokens, tk];
+  renderTokens();
+  renderRoster();
+  setSelected(tk.id);
+  return tk;
+};
+
+const swapToken = (id, { src, name, team }) => {
+  state.tokens = state.tokens.map((t) =>
+    t.id === id ? { ...t, src, name, team } : t
+  );
+  renderTokens();
+  renderRoster();
+  setSelected(id);
+};
+
+const toggleGrayscale = (id) => {
+  state.tokens = state.tokens.map((t) =>
+    t.id === id ? { ...t, grayscale: !t.grayscale } : t
+  );
+  renderTokens();
+  renderRoster();
+};
+
+function renderTokens() {
+  layerTokens.innerHTML = "";
+  state.tokens.forEach((tk) => {
+    const d = document.createElement("div");
+    d.className = "token" + (tk.grayscale ? " grayscale" : "");
+    d.dataset.id = tk.id;
+    d.dataset.team = tk.team;
+    d.title = `${tk.name} — arraste p/ mover · duplo-clique p/ marcar`;
+    d.style.left = `${tk.x}%`;
+    d.style.top = `${tk.y}%`;
+    if (state.selected && state.selected.id === tk.id) d.classList.add("selected");
+    const img = document.createElement("img");
+    img.src = tk.src; img.alt = tk.name; img.draggable = false;
+    d.append(img);
+    if (tk.grayscale) {
+      const x = document.createElement("img");
+      x.className = "x-mark"; x.src = X_MARK_SRC; x.alt = "marcado";
+      x.draggable = false;
+      d.append(x);
+    }
+    d.addEventListener("pointerdown", (e) => startTokenDrag(e, tk.id));
+    d.addEventListener("dblclick", (e) => { e.stopPropagation(); e.preventDefault(); toggleGrayscale(tk.id); });
+    layerTokens.append(d);
+  });
+}
+
+const screenDeltaToPct = () => {
+  const r = world.getBoundingClientRect();
+  return { sx: r.width / 100, sy: r.height / 100 };
+};
+
+function startTokenDrag(e, id) {
+  e.stopPropagation();
+  const tk = tokenById(id);
+  if (!tk) return;
+  setSelected(id);
+  renderRoster();
+  const el = document.querySelector(`.token[data-id="${id}"]`);
+  const { sx, sy } = screenDeltaToPct();
+  const startX = e.clientX, startY = e.clientY;
+  const origX = tk.x, origY = tk.y;
+  let moved = false;
+  if (el.setPointerCapture) el.setPointerCapture(e.pointerId);
+  const move = (ev) => {
+    const dx = (ev.clientX - startX) / sx;
+    const dy = (ev.clientY - startY) / sy;
+    if (Math.abs(ev.clientX - startX) + Math.abs(ev.clientY - startY) > 3) moved = true;
+    tk.x = clamp(origX + dx, 2, 98);
+    tk.y = clamp(origY + dy, 2, 98);
+    el.style.left = `${tk.x}%`;
+    el.style.top = `${tk.y}%`;
+  };
+  const up = () => {
+    el.removeEventListener("pointermove", move);
+    el.removeEventListener("pointerup", up);
+    el.removeEventListener("pointercancel", up);
+    state.tokens = state.tokens.map((t) => (t.id === id ? { ...t, x: tk.x, y: tk.y } : t));
+    if (moved) renderRoster();
+  };
+  el.addEventListener("pointermove", move);
+  el.addEventListener("pointerup", up);
+  el.addEventListener("pointercancel", up);
+}
+
+/* ---------- clique no fundo p/ desselecionar ---------- */
+viewport.addEventListener("click", (e) => {
+  if (e.target === viewport || e.target === world || e.target.id === "basemap") {
+    setSelected(null);
+    renderRoster();
+  }
+});
+
+/* ---------- modal champions (modo troca) ---------- */
+const currentTeam = () => (document.querySelector('input[name="team"]:checked') || {}).value || "blue";
+
+const openSwapPicker = (id) => {
+  pendingSwapId = id;
+  $("#champ-modal").hidden = false;
+  $("#champ-search").value = "";
+  renderChampGrid("");
+  $("#champ-search").focus();
+};
+
+const closeSwapPicker = () => {
+  pendingSwapId = null;
+  $("#champ-modal").hidden = true;
+};
+
+function renderChampGrid(filter = "") {
+  const grid = $("#champ-grid");
+  grid.innerHTML = "";
+  const q = filter.trim().toLowerCase();
+  CHAMPIONS.filter((s) => !q || s.includes(q))
+    .forEach((slug) => {
+      const b = document.createElement("button");
+      b.className = "champ-card";
+      const img = document.createElement("img");
+      img.src = championSrc(slug); img.alt = slug; img.loading = "lazy";
+      const s = document.createElement("span");
+      s.textContent = slug.replace(/-/g, " ");
+      b.append(img, s);
+      b.title = slug;
+      b.onclick = () => {
+        if (!pendingSwapId) return;
+        swapToken(pendingSwapId, {
+          src: championSrc(slug),
+          name: slug,
+          team: currentTeam(),
+        });
+        closeSwapPicker();
+      };
+      grid.append(b);
+    });
+  if (!grid.children.length) {
+    const p = document.createElement("p");
+    p.className = "muted"; p.textContent = "Nenhum champion encontrado.";
+    grid.append(p);
+  }
+}
+
+/* ---------- export / import ---------- */
+const exportBoard = () => {
+  const data = {
+    version: 2,
+    arrows: state.arrows,
+    wards: state.wards,
+    app: "wild-rift-map-planner",
+    savedAt: new Date().toISOString(),
+    cam: { ...state.cam },
+    structGray: Object.keys(state.structGray).filter((id) =>
+      STRUCTURES.some((s) => s.id === id)
+    ),
+    tokens: state.tokens.map((t) => ({
+      name: t.name,
+      team: t.team,
+      x: t.x,
+      y: t.y,
+      grayscale: !!t.grayscale,
+      src: t.src,
+    })),
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
+  a.href = URL.createObjectURL(blob);
+  a.download = `wildrift-board-${stamp}.json`;
+  document.body.append(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+};
+
+const importBoardData = (data) => {
+  if (!data || typeof data !== "object") throw new Error("formato inválido");
+  const rawTokens = Array.isArray(data.tokens) ? data.tokens : [];
+  const validTeams = new Set(["blue", "red", "neutral"]);
+  const tokens = [];
+  rawTokens.forEach((raw) => {
+    if (!raw || typeof raw.name !== "string") return;
+    const name = raw.name.trim();
+    if (!name) return;
+    const team = validTeams.has(raw.team) ? raw.team : "blue";
+    const x = clamp(Number(raw.x) || 50, 2, 98);
+    const y = clamp(Number(raw.y) || 50, 2, 98);
+    const grayscale = !!raw.grayscale;
+    let src = typeof raw.src === "string" && raw.src ? raw.src : null;
+    if (!src) {
+      if (name === "ward") src = WARD_SRC;
+      else if (CHAMPIONS.includes(name)) src = championSrc(name);
+      else return;
+    }
+    tokens.push({ id: uid(), src, name, team, x, y, grayscale });
+  });
+  const capped = tokens.slice(0, MAX_TOKENS);
+  const rawGray = Array.isArray(data.structGray)
+    ? data.structGray
+    : (data.structGray && typeof data.structGray === "object"
+      ? Object.keys(data.structGray).filter((k) => data.structGray[k])
+      : []);
+  const structIds = new Set(STRUCTURES.map((s) => s.id));
+  const structGray = {};
+  rawGray.forEach((id) => { if (structIds.has(id)) structGray[id] = true; });
+  const validPoint = (p) => p && Number.isFinite(p.x) && Number.isFinite(p.y);
+  const cleanPoint = (p) => ({ x: clamp(p.x, 0, 100), y: clamp(p.y, 0, 100) });
+  state.wards = (Array.isArray(data.wards) ? data.wards : []).filter(validPoint).map(cleanPoint);
+  state.arrows = (Array.isArray(data.arrows) ? data.arrows : [])
+    .filter((a) => a && validPoint(a.start) && validPoint(a.end))
+    .map((a) => ({ start: cleanPoint(a.start), end: cleanPoint(a.end) }));
+  selectTool(null);
+  state.tokens = capped;
+  state.structGray = structGray;
+  state.selected = null;
+  if (data.cam && typeof data.cam === "object") {
+    state.cam = {
+      x: Number(data.cam.x) || 0,
+      y: Number(data.cam.y) || 0,
+      zoom: clamp(Number(data.cam.zoom) || 1, 0.5, 3),
+    };
+  } else {
+    state.cam = { x: 0, y: 0, zoom: 1 };
+  }
+  renderStructs();
+  renderTokens();
+  renderRoster();
+  applyCam();
+};
+
+const importBoardFile = (file) => {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      importBoardData(JSON.parse(reader.result));
+    } catch (err) {
+      alert("Arquivo inválido: não foi possível importar o quadro.");
+    }
+  };
+  reader.readAsText(file);
+};
+
+/* ---------- wiring ---------- */
+function wire() {
+  ["arrow", "ward"].forEach((tool) => {
+    $(`#tool-${tool}`).onclick = () => selectTool(activeTool === tool ? null : tool);
+  });
+  $("#zoom-in").onclick = () => setZoom(state.cam.zoom * 1.2);
+  $("#zoom-out").onclick = () => setZoom(state.cam.zoom / 1.2);
+  $("#zoom-reset").onclick = () => { state.cam = { x: 0, y: 0, zoom: 1 }; applyCam(); };
+  $("#btn-restart").onclick = () => {
+    fetch("main.json")
+      .then((r) => { if (!r.ok) throw new Error("main.json"); return r.json(); })
+      .then((data) => importBoardData(data))
+      .catch(() => importBoardData(cloneBoard(DEFAULT_BOARD)));
+  };
+  $("#btn-export").onclick = () => exportBoard();
+  const fileInput = $("#file-import");
+  $("#btn-import").onclick = () => fileInput.click();
+  fileInput.addEventListener("change", (e) => {
+    importBoardFile(e.target.files[0]);
+    e.target.value = "";
+  });
+  const modal = $("#champ-modal");
+  $("#champ-close").onclick = () => closeSwapPicker();
+  modal.addEventListener("click", (e) => { if (e.target === modal) closeSwapPicker(); });
+  $("#champ-search").addEventListener("input", (e) => renderChampGrid(e.target.value));
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") { selectTool(null); closeSwapPicker(); setSelected(null); renderRoster(); }
+    if (e.key === "+" || e.key === "=") setZoom(state.cam.zoom * 1.15);
+    if (e.key === "-") setZoom(state.cam.zoom / 1.15);
+    if (e.key === "0") { state.cam = { x: 0, y: 0, zoom: 1 }; applyCam(); }
+  });
+}
+
+/* ---------- boot (sempre 10 via main.json) ---------- */
+renderStructs();
+renderTokens();
+renderRoster();
+renderChampGrid("");
+applyCam();
+wire();
+fetch("main.json")
+  .then((r) => { if (!r.ok) throw new Error("main.json"); return r.json(); })
+  .then((data) => importBoardData(data))
+  .catch(() => importBoardData(cloneBoard(DEFAULT_BOARD)));
