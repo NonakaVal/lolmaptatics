@@ -105,11 +105,11 @@ const DEFAULT_BOARD = {
     { name: "nautilus", team: "blue", x: 67.50503582911621, y: 76.8770148594214, grayscale: false, src: "resources/champions/nautilus.webp" },
     { name: "jinx", team: "blue", x: 73.33548114859289, y: 85.33165009249933, grayscale: false, src: "resources/champions/jinx.webp" },
     { name: "caitlyn", team: "blue", x: 78.05955117755705, y: 69.97498476186863, grayscale: false, src: "resources/champions/caitlyn.webp" },
-    { name: "seraphine", team: "blue", x: 83.86287010570938, y: 75.60573113481632, grayscale: false, src: "resources/champions/seraphine.webp" },
-    { name: "fiora", team: "blue", x: 22.992699282835808, y: 22.895683889367625, grayscale: false, src: "resources/champions/fiora.webp" },
-    { name: "jax", team: "blue", x: 30.594826279844668, y: 19.264657292836212, grayscale: false, src: "resources/champions/jax.webp" },
-    { name: "amumu", team: "blue", x: 69.70534589664892, y: 52.01066639233092, grayscale: false, src: "resources/champions/amumu.webp" },
-    { name: "warwick", team: "blue", x: 31.09931630927607, y: 50.70438558221432, grayscale: false, src: "resources/champions/warwick.webp" },
+    { name: "seraphine", team: "red", x: 83.86287010570938, y: 75.60573113481632, grayscale: false, src: "resources/champions/seraphine.webp" },
+    { name: "fiora", team: "red", x: 22.992699282835808, y: 22.895683889367625, grayscale: false, src: "resources/champions/fiora.webp" },
+    { name: "jax", team: "red", x: 30.594826279844668, y: 19.264657292836212, grayscale: false, src: "resources/champions/jax.webp" },
+    { name: "amumu", team: "red", x: 69.70534589664892, y: 52.01066639233092, grayscale: false, src: "resources/champions/amumu.webp" },
+    { name: "warwick", team: "red", x: 31.09931630927607, y: 50.70438558221432, grayscale: false, src: "resources/champions/warwick.webp" },
   ],
 };
 

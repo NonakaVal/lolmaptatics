@@ -10,14 +10,6 @@
   "structGray": [],
   "tokens": [
     {
-      "name": "ahri",
-      "team": "red",
-      "x": 56.86081019706422,
-      "y": 50.06190330221797,
-      "grayscale": false,
-      "src": "resources/champions/ahri.webp"
-    },
-    {
       "name": "akali",
       "team": "blue",
       "x": 48.81863810650575,
@@ -42,6 +34,30 @@
       "src": "resources/champions/jinx.webp"
     },
     {
+      "name": "fiora",
+      "team": "blue",
+      "x": 22.992699282835808,
+      "y": 22.895683889367625,
+      "grayscale": false,
+      "src": "resources/champions/fiora.webp"
+    },
+    {
+      "name": "warwick",
+      "team": "blue",
+      "x": 31.09931630927607,
+      "y": 50.70438558221432,
+      "grayscale": false,
+      "src": "resources/champions/warwick.webp"
+    },
+    {
+      "name": "ahri",
+      "team": "red",
+      "x": 56.86081019706422,
+      "y": 50.06190330221797,
+      "grayscale": false,
+      "src": "resources/champions/ahri.webp"
+    },
+    {
       "name": "caitlyn",
       "team": "red",
       "x": 78.27383689184276,
@@ -58,14 +74,6 @@
       "src": "resources/champions/seraphine.webp"
     },
     {
-      "name": "fiora",
-      "team": "blue",
-      "x": 22.992699282835808,
-      "y": 22.895683889367625,
-      "grayscale": false,
-      "src": "resources/champions/fiora.webp"
-    },
-    {
       "name": "jax",
       "team": "red",
       "x": 30.594826279844668,
@@ -80,14 +88,6 @@
       "y": 52.01066639233092,
       "grayscale": false,
       "src": "resources/champions/amumu.webp"
-    },
-    {
-      "name": "warwick",
-      "team": "blue",
-      "x": 31.09931630927607,
-      "y": 50.70438558221432,
-      "grayscale": false,
-      "src": "resources/champions/warwick.webp"
     }
   ]
 }

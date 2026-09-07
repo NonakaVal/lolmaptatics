@@ -9,19 +9,6 @@
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
-  <header class="topbar">
-    <div class="brand">
-      <strong>Wild Rift</strong><span>Map Planner · Champions</span>
-    </div>
-    <div class="top-actions">
-      <button id="btn-restart" class="btn small" title="Reiniciar quadro (main.json)">Restartar</button>
-      <button id="btn-export" class="btn small" title="Exportar quadro (JSON)">Exportar</button>
-      <button id="btn-import" class="btn small" title="Importar quadro (JSON)">Importar</button>
-      <input id="file-import" type="file" accept="application/json,.json" hidden />
-    </div>
-    <div class="hint">Arraste p/ mover · Duplo-clique na torre/barão/dragão/personagem marca</div>
-  </header>
-
   <main class="layout">
     <section class="viewport" id="viewport">
       <div class="world" id="world">
@@ -36,23 +23,29 @@
         </svg>
         <div id="layer-wards" class="layer"></div>
         <div id="layer-tokens" class="layer"></div>
+        <div id="layer-labels" class="layer"></div>
       </div>
-      <div class="map-zoom" id="map-zoom" role="group" aria-label="Ferramentas e zoom do mapa">
-        <button id="tool-arrow" class="btn tool-btn" aria-pressed="false" title="Comece em um personagem ou na ponta de uma seta" aria-describedby="tool-hint"><span aria-hidden="true">↗</span><span>Seta</span></button>
-        <button id="tool-ward" class="btn tool-btn" aria-pressed="false" title="Clique no mapa para colocar uma ward" aria-describedby="tool-hint"><img src="resources/champions/ward.webp" alt="" loading="lazy" decoding="async" /><span>Ward</span></button>
-        <span class="toolbar-divider" aria-hidden="true"></span>
+      <div class="team-rail team-left" id="team-blue" role="group" aria-label="Time azul"></div>
+      <div class="team-rail team-right" id="team-red" role="group" aria-label="Time vermelho"></div>
+      <div class="dock-bar dock-left" role="group" aria-label="Zoom do mapa">
         <button id="zoom-out" class="zoom-btn" title="Afastar (-)">−</button>
         <span class="zoom-label" id="zoom-label">100%</span>
         <button id="zoom-in" class="zoom-btn" title="Aproximar (+)">+</button>
         <button id="zoom-reset" class="zoom-btn" title="Resetar visão (0)">⤾</button>
       </div>
+      <div class="dock-bar dock-center" id="map-zoom" role="group" aria-label="Ferramentas do mapa">
+        <button id="tool-arrow" class="btn tool-btn" aria-pressed="false" title="Comece em um personagem ou na ponta de uma seta" aria-describedby="tool-hint"><span aria-hidden="true">↗</span><span>Seta</span></button>
+        <button id="tool-ward" class="btn tool-btn" aria-pressed="false" title="Clique no mapa para colocar uma ward" aria-describedby="tool-hint"><img src="resources/champions/ward.webp" alt="" loading="lazy" decoding="async" /><span>Ward</span></button>
+        <button id="tool-text" class="btn tool-btn" aria-pressed="false" title="Clique num personagem para vincular um texto" aria-describedby="tool-hint"><span aria-hidden="true">T</span><span>Texto</span></button>
+      </div>
+      <div class="dock-bar dock-right" role="group" aria-label="Opções do quadro">
+        <button id="btn-restart" class="btn tool-btn" title="Reiniciar quadro (main.json)"><span aria-hidden="true">↺</span><span>Restartar</span></button>
+        <button id="btn-export" class="btn tool-btn" title="Exportar quadro (JSON)"><span aria-hidden="true">⤓</span><span>Exportar</span></button>
+        <button id="btn-import" class="btn tool-btn" title="Importar quadro (JSON)"><span aria-hidden="true">⤒</span><span>Importar</span></button>
+        <input id="file-import" type="file" accept="application/json,.json" hidden />
+      </div>
       <p id="tool-hint" class="tool-hint" aria-live="polite"></p>
     </section>
-
-    <aside class="side" aria-label="Personagens">
-      <h2>Personagens</h2>
-      <div id="roster" class="roster"><p class="muted">Nenhum personagem adicionado.</p></div>
-    </aside>
   </main>
 
   <!-- Modal champions -->
@@ -64,11 +57,6 @@
       </div>
       <div class="modal-sub">
         <input id="champ-search" type="search" placeholder="Buscar... ex: ahri, lee" autocomplete="off" />
-        <div class="team-pick" role="radiogroup" aria-label="Time">
-          <label><input type="radio" name="team" value="blue" checked /> <span class="pill blue">Blue</span></label>
-          <label><input type="radio" name="team" value="red" /> <span class="pill red">Red</span></label>
-          <label><input type="radio" name="team" value="neutral" /> <span class="pill neutral">Neutro</span></label>
-        </div>
       </div>
       <div class="champ-grid" id="champ-grid"></div>
     </div>

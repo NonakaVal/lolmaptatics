@@ -8,6 +8,7 @@ const state = {
   tokens: [], // {id, src, name, team, x, y, grayscale} — sempre 10
   arrows: [],
   wards: [],
+  labels: [], // {id, tokenId, text}
   selected: null, // {id}
   structGray: {}, // structId -> true (P&B + X)
 };
@@ -27,12 +28,13 @@ let arrowPreview = null;
 const toolHints = {
   arrow: "Clique em um personagem ou na ponta de uma seta. Esc para sair.",
   ward: "Clique no mapa para colocar uma ward. Esc para sair.",
+  text: "Clique num personagem para vincular um texto. Esc para sair.",
 };
 function selectTool(tool) {
   activeTool = tool;
   arrowStart = arrowPreview = null;
   world.classList.toggle("tool-active", !!tool);
-  ["arrow", "ward"].forEach((name) => {
+  ["arrow", "ward", "text"].forEach((name) => {
     $(`#tool-${name}`).setAttribute("aria-pressed", String(name === tool));
   });
   $("#tool-hint").textContent = toolHints[tool] || "";
@@ -99,6 +101,53 @@ function renderAnnotations() {
     });
     wards.append(el);
   });
+  renderLabels();
+}
+function renderLabels() {
+  const box = $("#layer-labels");
+  if (!box) return;
+  box.replaceChildren();
+  // Agrupa por champion p/ empilhar múltiplas caixas
+  const byToken = {};
+  state.labels.forEach((lb) => {
+    (byToken[lb.tokenId] = byToken[lb.tokenId] || []).push(lb);
+  });
+  Object.entries(byToken).forEach(([tokenId, list]) => {
+    const tk = tokenById(tokenId);
+    if (!tk) return;
+    list.forEach((lb, i) => {
+      const el = document.createElement("div");
+      el.className = "map-label";
+      el.dataset.id = lb.id;
+      // Empilha acima do token: cada caixa extra sobe um pouco mais
+      el.style.left = `${tk.x}%`;
+      el.style.top = `${tk.y - i * 4}%`;
+      const input = document.createElement("input");
+      input.value = lb.text || "";
+      input.placeholder = "Texto...";
+      input.maxLength = 60;
+      input.setAttribute("aria-label", "Texto do champion");
+      input.addEventListener("input", () => { lb.text = input.value; });
+      input.addEventListener("pointerdown", (e) => e.stopPropagation());
+      input.addEventListener("click", (e) => e.stopPropagation());
+      input.addEventListener("dblclick", (e) => e.stopPropagation());
+      const close = document.createElement("button");
+      close.className = "label-close";
+      close.title = "Remover texto";
+      close.innerHTML = "×";
+      close.onclick = (e) => {
+        e.stopPropagation();
+        state.labels = state.labels.filter((l) => l.id !== lb.id);
+        renderLabels();
+      };
+      el.append(input, close);
+      // Evita que clique na caixa dispare ferramentas do mapa
+      el.addEventListener("pointerdown", (e) => e.stopPropagation());
+      el.addEventListener("click", (e) => e.stopPropagation());
+      el.addEventListener("dblclick", (e) => e.stopPropagation());
+      box.append(el);
+    });
+  });
 }
 function mapPoint(e) {
   const rect = world.getBoundingClientRect();
@@ -116,9 +165,24 @@ world.addEventListener("dblclick", (e) => {
 world.addEventListener("click", (e) => {
   if (!activeTool || e.button !== 0) return;
   if (e.target.closest && e.target.closest(".ward")) { e.stopPropagation(); return; } // duplo-clique p/ excluir não cria wards
+  if (e.target.closest && e.target.closest(".map-label")) { e.stopPropagation(); return; } // clique na caixa não cria nada
   e.stopPropagation();
   const point = mapPoint(e);
   if (activeTool === "ward") state.wards.push(point);
+  else if (activeTool === "text") {
+    const tokenEl = e.target.closest ? e.target.closest(".token") : null;
+    const token = tokenById(tokenEl?.dataset.id);
+    if (!token) { selectTool(null); return; }
+    const typed = window.prompt(`Texto para ${token.name.replace(/-/g, " ")}:`, "");
+    if (typed === null) return; // cancelou
+    state.labels.push({ id: uid(), tokenId: token.id, text: (typed || "").trim() });
+    renderLabels();
+    // Foca o input recém-criado
+    const box = $("#layer-labels");
+    const last = box ? box.lastElementChild?.querySelector("input") : null;
+    if (last) last.focus();
+    return;
+  }
   else if (!arrowStart) {
     // A tolerância em pixels mantém a ponta fácil de selecionar em qualquer zoom.
     const rect = world.getBoundingClientRect();
@@ -179,7 +243,7 @@ function startCanvasPan(e) {
   if (state.cam.zoom <= 1) return;
   if (activeTool) return;
   if (e.button !== 0) return;
-  if (e.target.closest && e.target.closest(".token, .structure, .ward, .map-zoom, .tool-hint, button")) return;
+  if (e.target.closest && e.target.closest(".token, .structure, .ward, .map-label, .dock-bar, .team-rail, .map-zoom, .tool-hint, button")) return;
   e.preventDefault();
   const startX = e.clientX, startY = e.clientY;
   const origX = state.cam.x, origY = state.cam.y;
@@ -217,9 +281,13 @@ const setSelected = (id) => {
   state.selected = id ? { id } : null;
   document.querySelectorAll(".token.selected")
     .forEach((el) => el.classList.remove("selected"));
+  document.querySelectorAll(".team-card.selected")
+    .forEach((el) => el.classList.remove("selected"));
   if (id) {
     const el = document.querySelector(`.token[data-id="${id}"]`);
     if (el) el.classList.add("selected");
+    const card = document.querySelector(`.team-card[data-id="${id}"]`);
+    if (card) card.classList.add("selected");
   }
 };
 
@@ -268,49 +336,42 @@ function renderStructs() {
   });
 }
 
-/* ---------- roster (side bar) ---------- */
+/* ---------- roster (trilhas 5v5, time pela posição) ---------- */
 function renderRoster() {
-  const box = $("#roster");
-  if (!state.tokens.length) {
-    box.innerHTML = `<p class="muted">Nenhum personagem adicionado.</p>`;
-    return;
-  }
-  box.innerHTML = "";
-  state.tokens.forEach((tk) => {
-    const item = document.createElement("div");
-    item.className = "roster-item";
-    item.dataset.team = tk.team;
-    if (tk.grayscale) item.classList.add("is-gray");
-    if (state.selected && state.selected.id === tk.id) item.classList.add("selected");
-
+  const blueRail = $("#team-blue");
+  const redRail = $("#team-red");
+  if (!blueRail || !redRail) return;
+  blueRail.replaceChildren();
+  redRail.replaceChildren();
+  // Ordem estável por índice: 0-4 azul (esquerda), 5-9 vermelho (direita)
+  const ordered = [...state.tokens].slice(0, MAX_TOKENS);
+  while (ordered.length < MAX_TOKENS) ordered.push(null);
+  const makeCard = (tk) => {
+    if (!tk) {
+      const empty = document.createElement("div");
+      empty.className = "team-card empty";
+      empty.style.opacity = "0.25";
+      return empty;
+    }
+    const btn = document.createElement("div");
+    btn.className = "team-card" + (tk.grayscale ? " is-gray" : "");
+    if (state.selected && state.selected.id === tk.id) btn.classList.add("selected");
+    btn.title = `${tk.name.replace(/-/g, " ")} — clique p/ selecionar · duplo-clique p/ trocar`;
+    btn.dataset.id = tk.id;
     const icon = document.createElement("img");
-    icon.className = "roster-icon";
+    icon.className = "team-icon";
     icon.loading = "lazy"; icon.decoding = "async";
     icon.alt = tk.name;
     if (typeof withImgFallback === "function") withImgFallback(icon, tk.src);
     icon.src = tk.src;
-    if (tk.grayscale) { icon.style.filter = "grayscale(1)"; icon.style.opacity = "0.45"; }
-
-    const name = document.createElement("span");
-    name.className = "roster-name";
-    name.textContent = tk.name.replace(/-/g, " ");
-
-    const btnBw = document.createElement("button");
-    btnBw.className = "roster-bw" + (tk.grayscale ? " active" : "");
-    btnBw.title = "Preto e branco";
-    btnBw.innerHTML = "◐";
-    btnBw.onclick = (e) => { e.stopPropagation(); toggleGrayscale(tk.id); };
-
-    const btnSwap = document.createElement("button");
-    btnSwap.className = "roster-swap";
-    btnSwap.title = "Trocar personagem";
-    btnSwap.innerHTML = "⇄";
-    btnSwap.onclick = (e) => { e.stopPropagation(); openSwapPicker(tk.id); };
-
-    item.addEventListener("click", () => setSelected(tk.id));
-    item.append(icon, name, btnBw, btnSwap);
-    box.append(item);
-  });
+    btn.addEventListener("click", () => setSelected(tk.id));
+    btn.addEventListener("dblclick", (e) => { e.stopPropagation(); e.preventDefault(); openSwapPicker(tk.id); });
+    btn.append(icon);
+    return btn;
+  };
+  // Índices 0-4 → azul (esquerda), 5-9 → vermelho (direita)
+  ordered.slice(0, 5).forEach((tk) => blueRail.append(makeCard(tk)));
+  ordered.slice(5, 10).forEach((tk) => redRail.append(makeCard(tk)));
 }
 
 /* ---------- tokens (quadro fixo de 10) ---------- */
@@ -324,9 +385,9 @@ const addToken = ({ src, name, team = "blue", x = 50, y = 50 }) => {
   return tk;
 };
 
-const swapToken = (id, { src, name, team }) => {
+const swapToken = (id, { src, name }) => {
   state.tokens = state.tokens.map((t) =>
-    t.id === id ? { ...t, src, name, team } : t
+    t.id === id ? { ...t, src, name } : t
   );
   renderTokens();
   renderRoster();
@@ -369,6 +430,7 @@ function renderTokens() {
     d.addEventListener("dblclick", (e) => { e.stopPropagation(); e.preventDefault(); toggleGrayscale(tk.id); });
     layerTokens.append(d);
   });
+  renderLabels();
 }
 
 const screenDeltaToPct = () => {
@@ -420,6 +482,7 @@ function startTokenDrag(e, id) {
     tk.y = clamp(origY + dy, 2, 98);
     el.style.left = `${tk.x}%`;
     el.style.top = `${tk.y}%`;
+    renderLabels();
   };
   const up = () => {
     el.removeEventListener("pointermove", move);
@@ -442,9 +505,7 @@ viewport.addEventListener("click", (e) => {
   }
 });
 
-/* ---------- modal champions (modo troca) ---------- */
-const currentTeam = () => (document.querySelector('input[name="team"]:checked') || {}).value || "blue";
-
+/* ---------- modal champions (modo troca, time fixo pela posição) ---------- */
 const openSwapPicker = (id) => {
   pendingSwapId = id;
   $("#champ-modal").hidden = false;
@@ -481,7 +542,6 @@ function renderChampGrid(filter = "") {
         swapToken(pendingSwapId, {
           src: championSrc(slug),
           name: slug,
-          team: currentTeam(),
         });
         closeSwapPicker();
       };
@@ -514,6 +574,10 @@ const exportBoard = () => {
       grayscale: !!t.grayscale,
       src: t.src,
     })),
+    labels: state.labels.map((l) => {
+      const idx = state.tokens.findIndex((t) => t.id === l.tokenId);
+      return { token: idx, text: l.text || "" };
+    }),
   };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
   const a = document.createElement("a");
@@ -548,7 +612,10 @@ const importBoardData = (data) => {
     }
     tokens.push({ id: uid(), src, name, team, x, y, grayscale });
   });
-  const capped = tokens.slice(0, MAX_TOKENS);
+  const capped = tokens.slice(0, MAX_TOKENS).map((tk, idx) => ({
+    ...tk,
+    team: idx < 5 ? "blue" : "red",
+  }));
   const rawGray = Array.isArray(data.structGray)
     ? data.structGray
     : (data.structGray && typeof data.structGray === "object"
@@ -569,6 +636,21 @@ const importBoardData = (data) => {
     }));
   selectTool(null);
   state.tokens = capped;
+  // Etiquetas: formato novo {token: idx, text} ou legado {tokenId}
+  const rawLabels = Array.isArray(data.labels) ? data.labels : [];
+  state.labels = rawLabels
+    .map((raw) => {
+      if (!raw || typeof raw !== "object") return null;
+      const text = typeof raw.text === "string" ? raw.text.slice(0, 60) : "";
+      if (Number.isInteger(raw.token) && capped[raw.token]) {
+        return { id: uid(), tokenId: capped[raw.token].id, text };
+      }
+      if (typeof raw.tokenId === "string" && capped.some((t) => t.id === raw.tokenId)) {
+        return { id: uid(), tokenId: raw.tokenId, text };
+      }
+      return null;
+    })
+    .filter(Boolean);
   state.structGray = structGray;
   state.selected = null;
   if (data.cam && typeof data.cam === "object") {
@@ -583,6 +665,7 @@ const importBoardData = (data) => {
   renderStructs();
   renderTokens();
   renderRoster();
+  renderLabels();
   applyCam();
 };
 
@@ -601,7 +684,7 @@ const importBoardFile = (file) => {
 
 /* ---------- wiring ---------- */
 function wire() {
-  ["arrow", "ward"].forEach((tool) => {
+  ["arrow", "ward", "text"].forEach((tool) => {
     $(`#tool-${tool}`).onclick = () => selectTool(activeTool === tool ? null : tool);
   });
   $("#zoom-in").onclick = () => setZoom(state.cam.zoom * 1.2);
