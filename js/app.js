@@ -42,18 +42,37 @@ function renderAnnotations() {
   const group = $("#arrows");
   group.replaceChildren();
   const arrows = [...state.arrows];
-  if (arrowStart && arrowPreview) arrows.push({ start: arrowStart, end: arrowPreview, preview: true });
-  arrows.forEach((arrow) => {
+  if (arrowStart && arrowPreview) arrows.push({ start: arrowStart, end: arrowPreview, preview: true, team: arrowStart.team });
+  arrows.forEach((arrow, idx) => {
+    const teamCls = arrow.team === "blue" ? " team-blue" : arrow.team === "red" ? " team-red" : "";
+    const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    g.setAttribute("class", "arrow-group");
+    const hit = document.createElementNS("http://www.w3.org/2000/svg", "line");
+    hit.setAttribute("class", "arrow-hit");
+    hit.setAttribute("x1", arrow.start.x * 10);
+    hit.setAttribute("y1", arrow.start.y * 7.250755);
+    hit.setAttribute("x2", arrow.end.x * 10);
+    hit.setAttribute("y2", arrow.end.y * 7.250755);
     const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-    line.setAttribute("class", "movement-arrow" + (arrow.preview ? " preview" : ""));
+    line.setAttribute("class", "movement-arrow" + (arrow.preview ? " preview" : "") + teamCls);
     line.setAttribute("x1", arrow.start.x * 10);
     line.setAttribute("y1", arrow.start.y * 7.250755);
     line.setAttribute("x2", arrow.end.x * 10);
     line.setAttribute("y2", arrow.end.y * 7.250755);
-    group.append(line);
+    g.append(hit, line);
+    if (!arrow.preview) {
+      g.addEventListener("dblclick", (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        state.arrows.splice(idx, 1);
+        arrowStart = arrowPreview = null;
+        renderAnnotations();
+      });
+    }
+    group.append(g);
     if (activeTool === "arrow" && !arrowStart && !arrow.preview) {
       const endpoint = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-      endpoint.setAttribute("class", "arrow-endpoint");
+      endpoint.setAttribute("class", "arrow-endpoint" + teamCls);
       endpoint.setAttribute("cx", arrow.end.x * 10);
       endpoint.setAttribute("cy", arrow.end.y * 7.250755);
       endpoint.setAttribute("r", 8);
@@ -62,14 +81,21 @@ function renderAnnotations() {
   });
   const wards = $("#layer-wards");
   wards.replaceChildren();
-  state.wards.forEach((ward) => {
+  state.wards.forEach((ward, idx) => {
     const el = document.createElement("div");
     el.className = "ward";
     el.style.left = `${ward.x}%`;
     el.style.top = `${ward.y}%`;
+    el.title = "Ward — duplo-clique p/ remover";
     const img = document.createElement("img");
     img.src = WARD_SRC; img.alt = "Ward"; img.draggable = false;
     el.append(img);
+    el.addEventListener("dblclick", (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      state.wards.splice(idx, 1);
+      renderAnnotations();
+    });
     wards.append(el);
   });
 }
@@ -82,10 +108,13 @@ world.addEventListener("pointerdown", (e) => {
   if (activeTool) { e.stopPropagation(); e.preventDefault(); }
 }, true);
 world.addEventListener("dblclick", (e) => {
+  if (e.target.closest && e.target.closest(".ward")) return; // deixa o handler da ward remover
+  if (e.target.closest && e.target.closest(".arrow-group")) return; // deixa o handler da seta remover
   if (activeTool) { e.stopPropagation(); e.preventDefault(); }
 }, true);
 world.addEventListener("click", (e) => {
   if (!activeTool || e.button !== 0) return;
+  if (e.target.closest && e.target.closest(".ward")) { e.stopPropagation(); return; } // duplo-clique p/ excluir não cria wards
   e.stopPropagation();
   const point = mapPoint(e);
   if (activeTool === "ward") state.wards.push(point);
@@ -96,18 +125,18 @@ world.addEventListener("click", (e) => {
     state.arrows.forEach((arrow) => {
       const d = Math.hypot((point.x - arrow.end.x) * rect.width / 100,
         (point.y - arrow.end.y) * rect.height / 100);
-      if (d <= distance) { nearest = arrow.end; distance = d; }
+      if (d <= distance) { nearest = { x: arrow.end.x, y: arrow.end.y, team: arrow.team }; distance = d; }
     });
     const token = tokenById(e.target.closest(".token")?.dataset.id);
-    const start = nearest || token;
-    if (!start) return;
-    arrowStart = { x: start.x, y: start.y };
+    const start = nearest || (token ? { x: token.x, y: token.y, team: token.team } : null);
+    if (!start) { selectTool(null); return; }
+    arrowStart = { x: start.x, y: start.y, team: start.team || "neutral" };
     arrowPreview = arrowStart;
     $("#tool-hint").textContent = "Mova o mouse e clique no destino. Esc cancela.";
   }
   else {
     if (Math.hypot(point.x - arrowStart.x, point.y - arrowStart.y) < 0.1) return;
-    state.arrows.push({ start: arrowStart, end: point });
+    state.arrows.push({ start: { x: arrowStart.x, y: arrowStart.y }, end: point, team: arrowStart.team || "neutral" });
     arrowStart = arrowPreview = null;
     $("#tool-hint").textContent = toolHints.arrow;
   }
@@ -120,16 +149,67 @@ world.addEventListener("pointermove", (e) => {
 });
 
 /* ---------- camera ---------- */
+const clampPan = () => {
+  if (state.cam.zoom <= 1) { state.cam.x = 0; state.cam.y = 0; return; }
+  const vw = viewport.clientWidth, vh = viewport.clientHeight;
+  const ww = world.offsetWidth * state.cam.zoom;
+  const wh = world.offsetHeight * state.cam.zoom;
+  const maxX = Math.max(0, (ww - vw) / 2 + 40);
+  const maxY = Math.max(0, (wh - vh) / 2 + 40);
+  state.cam.x = clamp(state.cam.x, -maxX, maxX);
+  state.cam.y = clamp(state.cam.y, -maxY, maxY);
+};
 const applyCam = () => {
+  clampPan();
   const { x, y, zoom } = state.cam;
   world.style.transform = `translate(-50%,-50%) translate(${x}px,${y}px) scale(${zoom})`;
   $("#zoom-label").textContent = `${Math.round(zoom * 100)}%`;
+  viewport.classList.toggle("pannable", zoom > 1);
 };
 
 const setZoom = (z) => {
   state.cam.zoom = clamp(z, 0.5, 3);
   applyCam();
 };
+
+/* Pan do canvas: só quando zoom > 100%. Em 100% (ou menos) desativa e recentraliza. */
+let panMoved = false;
+function startCanvasPan(e) {
+  if (state.cam.zoom <= 1) return;
+  if (activeTool) return;
+  if (e.button !== 0) return;
+  if (e.target.closest && e.target.closest(".token, .structure, .ward, .map-zoom, .tool-hint, button")) return;
+  e.preventDefault();
+  const startX = e.clientX, startY = e.clientY;
+  const origX = state.cam.x, origY = state.cam.y;
+  panMoved = false;
+  viewport.classList.add("panning");
+  const move = (ev) => {
+    const dx = ev.clientX - startX;
+    const dy = ev.clientY - startY;
+    if (Math.abs(dx) + Math.abs(dy) > 4) panMoved = true;
+    state.cam.x = origX + dx;
+    state.cam.y = origY + dy;
+    applyCam();
+  };
+  const up = () => {
+    viewport.classList.remove("panning");
+    document.removeEventListener("pointermove", move);
+    document.removeEventListener("pointerup", up);
+    document.removeEventListener("pointercancel", up);
+    // consome o click seguinte se houve arrasto (evita desselecionar à toa)
+    if (panMoved) {
+      const swallow = (ev) => { ev.stopPropagation(); ev.preventDefault(); };
+      viewport.addEventListener("click", swallow, true);
+      setTimeout(() => viewport.removeEventListener("click", swallow, true), 0);
+      panMoved = false;
+    }
+  };
+  document.addEventListener("pointermove", move);
+  document.addEventListener("pointerup", up);
+  document.addEventListener("pointercancel", up);
+}
+viewport.addEventListener("pointerdown", startCanvasPan);
 
 /* ---------- seleção ---------- */
 const setSelected = (id) => {
@@ -155,7 +235,7 @@ function renderStructs() {
   layerStructs.innerHTML = "";
   STRUCTURES.forEach((s) => {
     const d = document.createElement("div");
-    d.className = "structure" + (state.structGray[s.id] ? " grayscale" : "");
+    d.className = "structure kind-" + (s.kind || "tower") + (state.structGray[s.id] ? " grayscale" : "");
     d.dataset.id = s.id;
     d.title = `${s.label} — duplo-clique p/ marcar`;
     d.style.left = `${s.x}%`;
@@ -164,10 +244,18 @@ function renderStructs() {
     img.src = structIconFor(s); img.alt = s.label; img.draggable = false;
     d.append(img);
     if (state.structGray[s.id]) {
-      const x = document.createElement("img");
-      x.className = "x-mark"; x.src = X_MARK_SRC; x.alt = "marcada";
-      x.draggable = false;
-      d.append(x);
+      if (s.kind === "baron" || s.kind === "dragon") {
+        const clock = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        clock.setAttribute("class", "clock-mark");
+        clock.setAttribute("viewBox", "0 0 24 24");
+        clock.innerHTML = '<circle cx="12" cy="12" r="9" fill="rgba(8,12,18,0.55)" stroke="#fff" stroke-width="2.4"/><path d="M12 7v5l3.5 2" stroke="#fff" stroke-width="2.4" stroke-linecap="round" fill="none"/>';
+        d.append(clock);
+      } else {
+        const x = document.createElement("img");
+        x.className = "x-mark"; x.src = X_MARK_SRC; x.alt = "marcada";
+        x.draggable = false;
+        d.append(x);
+      }
     }
     d.addEventListener("dblclick", (e) => { e.stopPropagation(); e.preventDefault(); toggleStruct(s.id); });
     layerStructs.append(d);
@@ -276,6 +364,30 @@ const screenDeltaToPct = () => {
   return { sx: r.width / 100, sy: r.height / 100 };
 };
 
+/* ---------- setas ligadas ao token: mover apaga a sequência ---------- */
+const ARROW_MATCH_TOL = 0.6; // % do mapa — encostou na posição antiga, sai
+const nearPt = (a, b) => Math.hypot(a.x - b.x, a.y - b.y) < ARROW_MATCH_TOL;
+function pruneArrowsAt(pt) {
+  const doomed = [{ x: pt.x, y: pt.y }];
+  let pending = [...state.arrows];
+  let changed = true;
+  while (changed) {
+    changed = false;
+    const next = [];
+    for (const a of pending) {
+      const hit = doomed.some((d) => nearPt(a.start, d) || nearPt(a.end, d));
+      if (hit) { doomed.push({ ...a.start }, { ...a.end }); changed = true; }
+      else next.push(a);
+    }
+    pending = next;
+  }
+  if (pending.length !== state.arrows.length) {
+    state.arrows = pending;
+    arrowStart = arrowPreview = null;
+    renderAnnotations();
+  }
+}
+
 function startTokenDrag(e, id) {
   e.stopPropagation();
   const tk = tokenById(id);
@@ -303,6 +415,7 @@ function startTokenDrag(e, id) {
     el.removeEventListener("pointercancel", up);
     state.tokens = state.tokens.map((t) => (t.id === id ? { ...t, x: tk.x, y: tk.y } : t));
     if (moved) renderRoster();
+    if (Math.hypot(tk.x - origX, tk.y - origY) > 0.15) pruneArrowsAt({ x: origX, y: origY });
   };
   el.addEventListener("pointermove", move);
   el.addEventListener("pointerup", up);
@@ -432,7 +545,11 @@ const importBoardData = (data) => {
   state.wards = (Array.isArray(data.wards) ? data.wards : []).filter(validPoint).map(cleanPoint);
   state.arrows = (Array.isArray(data.arrows) ? data.arrows : [])
     .filter((a) => a && validPoint(a.start) && validPoint(a.end))
-    .map((a) => ({ start: cleanPoint(a.start), end: cleanPoint(a.end) }));
+    .map((a) => ({
+      start: cleanPoint(a.start),
+      end: cleanPoint(a.end),
+      team: ["blue", "red", "neutral"].includes(a.team) ? a.team : undefined,
+    }));
   selectTool(null);
   state.tokens = capped;
   state.structGray = structGray;
@@ -497,6 +614,7 @@ function wire() {
     if (e.key === "-") setZoom(state.cam.zoom / 1.15);
     if (e.key === "0") { state.cam = { x: 0, y: 0, zoom: 1 }; applyCam(); }
   });
+  window.addEventListener("resize", applyCam);
 }
 
 /* ---------- boot (sempre 10 via main.json) ---------- */

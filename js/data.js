@@ -48,6 +48,9 @@ const STRUCTURES = [
   { id: "RBOT-T2", team: "red", label: "T2 RED BOT", x: 78.90, y: 44.83, kind: "tower" },
   { id: "RBOT-T3", team: "red", label: "T3 RED BOT", x: 79.33, y: 33.89, kind: "tower" },
   { id: "R-NX", team: "red", label: "RED NEXUS", x: 77.22, y: 19.55, kind: "nexus" },
+  // Objetivos épicos do rio
+  { id: "BARON", team: "purple", label: "BARÃO", x: 38.0, y: 34.0, kind: "baron" },
+  { id: "DRAGON", team: "red", label: "DRAGÃO", x: 63.6, y: 66.6, kind: "dragon" },
 ];
 
 const structIconFor = (s) => {
@@ -55,6 +58,8 @@ const structIconFor = (s) => {
     return s.team === "blue"
       ? "resources/map-map-icons/blue-nexus-icon.png"
       : "resources/map-map-icons/red-nexus-icon.png";
+  if (s.kind === "baron") return "resources/map-map-icons/baron_icon.svg";
+  if (s.kind === "dragon") return "resources/map-map-icons/dragon_icon.svg";
   return s.team === "blue"
     ? "resources/map-map-icons/blue-tower-icon.png"
     : "resources/map-map-icons/red-tower-icon.png";

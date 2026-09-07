@@ -77,6 +77,20 @@ body {
 .structure.grayscale { background: rgb(11, 33, 50); filter: none; }
 .structure.grayscale img:first-child { filter: grayscale(1); opacity: 0.2; }
 .structure.grayscale .x-mark { opacity: 0.6; }
+/* Objetivos épicos (barão/dragão): levemente maiores e efeito "morto" mais forte */
+.structure.kind-baron, .structure.kind-dragon { width: 5.5%; }
+.structure.kind-baron.grayscale img:first-child,
+.structure.kind-dragon.grayscale img:first-child { filter: grayscale(1); opacity: 0.12; }
+.structure.kind-baron .clock-mark, .structure.kind-dragon .clock-mark {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 72%;
+  height: 72%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.7));
+}
 .structure .x-mark {
   position: absolute;
   left: 50%;
@@ -113,7 +127,10 @@ body {
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55);
 }
 .layer { position: absolute; inset: 0; pointer-events: none; }
-.structure, .token { pointer-events: auto; }
+.structure, .token, .ward { pointer-events: auto; }
+.viewport.pannable { cursor: grab; touch-action: none; }
+.viewport.pannable:active { cursor: grabbing; }
+.viewport.panning { cursor: grabbing; }
 .map-zoom {
   position: absolute;
   left: 50%;
@@ -338,8 +355,14 @@ body {
 .world.tool-active { cursor: crosshair; touch-action: none; }
 .world.tool-active .token, .world.tool-active .structure { cursor: crosshair; }
 #layer-arrows { width: 100%; height: 100%; overflow: visible; }
-.movement-arrow { stroke: #e8cf87; stroke-width: 3; stroke-linecap: round; marker-end: url(#arrow-tip); filter: drop-shadow(0 1px 1px rgba(0,0,0,0.65)); }
+.movement-arrow { stroke: #e8cf87; stroke-width: 3; stroke-linecap: round; marker-end: url(#arrow-tip); filter: drop-shadow(0 1px 1px rgba(0,0,0,0.65)); pointer-events: none; }
 .movement-arrow.preview { opacity: 0.55; stroke-dasharray: 7 5; }
-.ward { position: absolute; width: 1.8%; aspect-ratio: 1; transform: translate(-50%, -50%); }
-.ward::before { content: ""; position: absolute; width: 500%; height: 500%; left: 50%; top: 50%; transform: translate(-50%, -50%); border-radius: 50%; background: rgba(161, 183, 139, 0.08); border: 1px solid rgba(161, 183, 139, 0.2); }
+.movement-arrow.team-blue { stroke: #2f9dff; marker-end: url(#arrow-tip-blue); }
+.movement-arrow.team-red { stroke: #ff4d5e; marker-end: url(#arrow-tip-red); }
+.arrow-group { pointer-events: none; }
+.arrow-hit { stroke: rgba(0, 0, 0, 0); stroke-width: 18; fill: none; pointer-events: stroke; cursor: pointer; }
+.arrow-endpoint.team-blue { fill: rgba(47, 157, 255, 0.12); stroke: rgba(47, 157, 255, 0.55); }
+.arrow-endpoint.team-red { fill: rgba(255, 77, 94, 0.12); stroke: rgba(255, 77, 94, 0.55); }
+.ward { position: absolute; width: 1.8%; aspect-ratio: 1 / 1; transform: translate(-50%, -50%); pointer-events: auto; cursor: pointer; }
+.ward::before { content: ""; position: absolute; width: 500%; aspect-ratio: 1 / 1; height: auto; left: 50%; top: 50%; transform: translate(-50%, -50%); border-radius: 50%; background: rgba(161, 183, 139, 0.08); border: 1px solid rgba(161, 183, 139, 0.2); }
 .ward img { position: relative; width: 100%; height: 100%; object-fit: contain; opacity: 0.9; }
